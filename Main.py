@@ -1,3 +1,7 @@
+''' Juan Hernandez
+	CST205 Project 2
+'''
+
 from PyQt4 import QtGui, QtCore
 #import ExtendedQLabel
 import sys
