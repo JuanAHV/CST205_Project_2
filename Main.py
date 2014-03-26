@@ -1,10 +1,14 @@
-''' Juan Hernandez
-	CST205 Project 2
 '''
+Juan Hernandez
+ CST205 
+ Project 2
+ '''
 
 from PyQt4 import QtGui, QtCore
 #import ExtendedQLabel
 import sys
+from Track import *
+from Engine import *
 
 class Main(QtGui.QMainWindow):
     def __init__(self, parent = None):
@@ -17,6 +21,9 @@ class Main(QtGui.QMainWindow):
         self.playButton = QtGui.QPushButton('PLAY')
         self.playButton.setMaximumSize(250,100)
         self.addButton.clicked.connect(self.addWidget)
+
+        self.connect(self.playButton, QtCore.SIGNAL('clicked()'), self.playClicked)
+        self.connect(self.stopButton, QtCore.SIGNAL('clicked()'), self.stopClicked)
 
         # scroll area widget contents - layout
         self.scrollLayout = QtGui.QFormLayout()
@@ -57,75 +64,42 @@ class Main(QtGui.QMainWindow):
         
         self.setGeometry(100,100,1000,600)
         self.showMaximized()
+
+        self.tracks = {}
+   
 		
     def addWidget(self):
 		self.count += 1
-		self.scrollLayout.addRow(Track(str(self.count)))
-		
-class Track(QtGui.QWidget):
-	def __init__( self, name, parent=None):
-		super(Track, self).__init__(parent)
+		self.track = Track(str(self.count))
 
-		self.pushButton = QtGui.QPushButton("stuff")
+        #self.tracks[self.count: self.track]
 
-		# self.pushButton2.clicked.connect(self.deleteLater)
+		self.scrollLayout.addRow(self.track)
+		#self.scrollLayout.addRow(Track(str(self.count)))
 
-		layout = QtGui.QHBoxLayout()
-
-		leftPanel = QtGui.QVBoxLayout()
-
-		nameLayout = QtGui.QHBoxLayout()
-
-		self.closeButton = QtGui.QPushButton("X")
-		self.closeButton.setMaximumSize(40,120)
-		self.closeButton.setStyleSheet("background-color: #ffaaaa; border-radius:5;")
-		self.closeButton.clicked.connect(self.deleteLater)
-		self.trackName = QtGui.QPushButton(" Untitled Track "+name)
-		#self.trackName = QtGui.QLabel(" Untitled Track "+name)
-		self.trackName.setMaximumSize(160,100)
-		self.trackName.setStyleSheet("background-color: #ffffff")
-		self.trackName.clicked.connect(self.renameDialog)
-		#self.trackName.mouseReleaseEvent(self.renameDialog)
-		#self.trackName.mouseDoubleClickEvent(self.renameDialog)
-
-		nameLayout.addWidget(self.closeButton)
-		nameLayout.addWidget(self.trackName)
-
-		self.recordButton = QtGui.QPushButton("Record")
-		self.recordButton.setMaximumSize(200,100)
-
-		self.playButton = QtGui.QPushButton("Play")
-		self.playButton.setMaximumSize(200,100)
-		self.stopButton = QtGui.QPushButton("Stop")
-		self.stopButton.setMaximumSize(200,100)
-		self.mixButton = QtGui.QPushButton("Mix")
-		self.mixButton.setMaximumSize(200,100)
-
-
-		leftPanel.addLayout(nameLayout)
-		leftPanel.addWidget(self.recordButton)
-		leftPanel.addWidget(self.playButton)
-		leftPanel.addWidget(self.stopButton)
-		leftPanel.addWidget(self.mixButton)
-
-
-		layout.addLayout(leftPanel)
-
-		layout.addWidget(self.pushButton)
-
-
-		self.setLayout(layout)
-	  
-	def renameDialog(self):
-		text, ok = QtGui.QInputDialog.getText(self, 'Rename', '')
-		
-		if ok:
-			self.trackName.setText(str(text))
-			self.setSelected(False)
-			#self.trackName.setStyleSheet("background-color: #ffffff")
+    def playClicked(self):
+        #start playback thread
+        self.merge = PlayAll(self.tracks)
+        self.merge.start()
+        #self.merge.terminate()
+        self.play = Play("Untitled_Track_3")
+        self.play.start()
 
 
 
+    def stopClicked(self):
+        #self.StopButton.setPixmap(QPixmap(self.STOP_BUTTON))
+        print('Stop Button Clicked')
+        # Kill arecord subprocess and terminate threads
+        self.stop_playback()
+        #self.record.terminate()
+        self.play.terminate()
+        # change playback button to original state
+
+    def stop_playback(self):
+        #subprocess.call(["killall","arecord"])  
+        self.play.terminate()
+        #self.show_wave_n_spec("test.wav")
 
 app = QtGui.QApplication(sys.argv)
 myWidget = Main()
