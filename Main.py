@@ -5,8 +5,10 @@ Juan Hernandez
  '''
 
 from PyQt4 import QtGui, QtCore
+from PySide.QtCore import *
+from PySide.QtGui import *
 #import ExtendedQLabel
-import sys
+import sys, os, shutil
 from Track import *
 from Engine import *
 
@@ -16,11 +18,12 @@ class Main(QtGui.QMainWindow):
 
         # main button
         self.addButton = QtGui.QPushButton('ADD NEW TRACK')
+        self.addButton.clicked.connect(self.addTrackWidget)
         self.stopButton = QtGui.QPushButton('STOP')
         self.stopButton.setMaximumSize(250,100)
         self.playButton = QtGui.QPushButton('PLAY')
         self.playButton.setMaximumSize(250,100)
-        self.addButton.clicked.connect(self.addWidget)
+
 
         self.connect(self.playButton, QtCore.SIGNAL('clicked()'), self.playClicked)
         self.connect(self.stopButton, QtCore.SIGNAL('clicked()'), self.stopClicked)
@@ -65,35 +68,63 @@ class Main(QtGui.QMainWindow):
         self.setGeometry(100,100,1000,600)
         self.showMaximized()
 
-        self.tracks = {}
+        self.trackArray = {}
+
+        # Dialog for creating project at start up
+        self.projectPath = self.createProject()
    
 		
-    def addWidget(self):
-		self.count += 1
-		self.track = Track(str(self.count))
+    def addTrackWidget(self):
+        self.index = self.count
+        self.count += 1
+        self.trackArray[self.index] = Track(str(self.count),str(self.projectPath))
 
-        #self.tracks[self.count: self.track]
+        self.scrollLayout.addRow(self.trackArray[self.index])
+		#self.scrollLayout.addRow(self.track)
 
-		self.scrollLayout.addRow(self.track)
-		#self.scrollLayout.addRow(Track(str(self.count)))
+    def createProject(self):
+        projectPath, ok = QtGui.QInputDialog.getText(self, 'Create Project', "Project Name: ")
+        if ok:
+            projectPath = str(projectPath)
+
+            self.createProjectDirs(projectPath)
+            return projectPath
+        else:
+            QtGui.QMessageBox.question(self, 'Warning!',"Nothing will be saved unless you create a project.", QtGui.QMessageBox.Ok)
+            self.createProjectDirs('temp')
+            return 'temp'
+
+    def createProjectDirs(self, dirName):
+
+        if not os.path.exists(dirName):
+            os.makedirs(dirName)
+        if not os.path.exists(dirName+"/audio"):
+            os.makedirs(dirName+"/audio")
 
     def playClicked(self):
+
+        print "play clicked"
+
+        for track in self.trackArray:
+            if self.trackArray[track].getState() == 'active':
+                print self.trackArray[track].getTrackName()
+                
         #start playback thread
-        self.merge = PlayAll(self.tracks)
-        self.merge.start()
+        #self.merge = PlayAll(self.tracks)
+        #self.merge.start()
         #self.merge.terminate()
-        self.play = Play("Untitled_Track_3")
-        self.play.start()
-
-
+        #self.play = Play("Untitled_Track_3")
+        #self.play.start()
 
     def stopClicked(self):
+
+        print "stop clicked"
         #self.StopButton.setPixmap(QPixmap(self.STOP_BUTTON))
-        print('Stop Button Clicked')
+        #print('Stop Button Clicked')
         # Kill arecord subprocess and terminate threads
-        self.stop_playback()
+        #self.stop_playback()
         #self.record.terminate()
-        self.play.terminate()
+        #self.play.terminate()
         # change playback button to original state
 
     def stop_playback(self):
@@ -101,7 +132,14 @@ class Main(QtGui.QMainWindow):
         self.play.terminate()
         #self.show_wave_n_spec("test.wav")
 
+    def closeEvent(self, event):
+        if(self.projectPath == 'temp'):
+            shutil.rmtree('temp')
+        event.accept() # let the window close
+        
+
 app = QtGui.QApplication(sys.argv)
 myWidget = Main()
 myWidget.show()
 app.exec_()
+
