@@ -1,7 +1,7 @@
 '''
-Juan Hernandez
+ Juan Hernandez
  CST205 
- Project 2
+ Project 3
 
  '''
 
@@ -239,9 +239,10 @@ class Track(QtGui.QWidget):
 		# change playback button to original state
 
 	def stop_recording(self):
-		subprocess.call(["killall","arecord"])	
+		#subprocess.call(["killall","arecord"])	
 		self.play.terminate()
-		self.show_wave_n_spec("Untitled_Track_1")
+		self.record.terminate()
+		#self.show_wave_n_spec("Untitled_Track_1")
 
 	def recordClicked(self):
 

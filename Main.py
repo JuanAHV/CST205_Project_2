@@ -1,7 +1,7 @@
 '''
-Juan Hernandez
+ Juan Hernandez
  CST205 
- Project 2
+ Project 3
  '''
 
 from PyQt4 import QtGui, QtCore
@@ -23,7 +23,6 @@ class Main(QtGui.QMainWindow):
         self.stopButton.setMaximumSize(250,100)
         self.playButton = QtGui.QPushButton('PLAY')
         self.playButton.setMaximumSize(250,100)
-
 
         self.connect(self.playButton, QtCore.SIGNAL('clicked()'), self.playClicked)
         self.connect(self.stopButton, QtCore.SIGNAL('clicked()'), self.stopClicked)
@@ -104,28 +103,24 @@ class Main(QtGui.QMainWindow):
     def playClicked(self):
 
         print "play clicked"
+        self.playIndex = 0
+        self.playArray = {} 
 
         for track in self.trackArray:
             if self.trackArray[track].getState() == 'active':
-                print self.trackArray[track].getTrackName()
-                
-        #start playback thread
-        #self.merge = PlayAll(self.tracks)
-        #self.merge.start()
-        #self.merge.terminate()
-        #self.play = Play("Untitled_Track_3")
-        #self.play.start()
+                print self.trackArray[track].getTrackName() + " is playing"
+                self.playArray[self.playIndex] = Play(self.trackArray[track].getTrackName())
+                self.playIndex+=1
+
+        for track in self.playArray:
+            self.playArray[track].start()
 
     def stopClicked(self):
 
         print "stop clicked"
-        #self.StopButton.setPixmap(QPixmap(self.STOP_BUTTON))
-        #print('Stop Button Clicked')
-        # Kill arecord subprocess and terminate threads
-        #self.stop_playback()
-        #self.record.terminate()
-        #self.play.terminate()
-        # change playback button to original state
+
+        for track in self.playArray:
+            self.playArray[track].terminate()
 
     def stop_playback(self):
         #subprocess.call(["killall","arecord"])  
@@ -133,9 +128,11 @@ class Main(QtGui.QMainWindow):
         #self.show_wave_n_spec("test.wav")
 
     def closeEvent(self, event):
+        #remove temp files
         if(self.projectPath == 'temp'):
             shutil.rmtree('temp')
-        event.accept() # let the window close
+        # let the window close
+        event.accept() 
         
 
 app = QtGui.QApplication(sys.argv)
