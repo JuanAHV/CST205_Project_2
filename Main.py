@@ -1,9 +1,3 @@
-'''
- Juan Hernandez
- CST205 
- Project 3
- '''
-
 from PyQt4 import QtGui, QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -118,17 +112,11 @@ class Main(QtGui.QMainWindow):
     def stopClicked(self):
 
         print "stop clicked"
-
         for track in self.playArray:
             self.playArray[track].terminate()
 
-    def stop_playback(self):
-        #subprocess.call(["killall","arecord"])  
-        self.play.terminate()
-        #self.show_wave_n_spec("test.wav")
-
     def closeEvent(self, event):
-        #remove temp files
+        # remove temp files
         if(self.projectPath == 'temp'):
             shutil.rmtree('temp')
         # let the window close

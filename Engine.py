@@ -1,9 +1,3 @@
-'''
-Juan Hernandez
- CST205 
- Project 2
- '''
-
 import sys
 import time
 import thread

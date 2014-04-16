@@ -1,10 +1,3 @@
-'''
- Juan Hernandez
- CST205 
- Project 3
-
- '''
-
 import sys
 import os
 import time
