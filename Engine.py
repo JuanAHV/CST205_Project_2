@@ -4,21 +4,21 @@ import thread
 import subprocess
 import pyaudio
 import wave
+import numpy
 from pylab import *
-from PyQt4 import QtGui, QtCore
+from PyQt4 import *
 
-class Record(QtCore.QThread):
-
+class Record(QtCore.QThread,QtGui.QWidget):
 	def __init__(self, name):
 		QtCore.QThread.__init__(self) 
 		self.name = str(name)
 	def run(self):
-		
+
 		CHUNK = 1024
 		FORMAT = pyaudio.paInt16
 		CHANNELS = 2
 		RATE = 44100
-		RECORD_SECONDS = 20
+		RECORD_SECONDS = 10
 		WAVE_OUTPUT_FILENAME = self.name
 
 		if sys.platform == 'darwin':
@@ -35,14 +35,19 @@ class Record(QtCore.QThread):
 		print("* recording")
 
 		frames = []
-
+		
+		#self.spaceKeyPressed = SpaceKeyPress()
+		#self.spaceKeyPressed.start()
+		
 		for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+		#while (self.spaceKeypressed != True):
 		    data = stream.read(CHUNK)
 		    frames.append(data)
 
 		print("* done recording")
+		#self.spaceKeyPressed.terminate()
 
-		stream.stop_stream()
+		#stream.stop_stream()
 		stream.close()
 		p.terminate()
 
@@ -53,10 +58,27 @@ class Record(QtCore.QThread):
 		wf.writeframes(b''.join(frames))
 		wf.close()
 
+class SpaceKeyPress(QtCore.QThread,QtGui.QWidget):
+	def __init__(self):
+		QtCore.QThread.__init__(self)
+
+	def run(self):
+		print "Running space key detect event."
+
+
+	def keyPressEvent(self, event):    
+		print "key press event"  
+		self.key = event.key()  
+		if self.key == QtCore.Qt.Key_Space:
+			#self.spaceKeypressed = True
+			print "Space Key Pressed"
+			self.terminate()
+
 class Play(QtCore.QThread):
 	def __init__(self, name):
 		QtCore.QThread.__init__(self)
 		self.name = str(name)
+		self.volume = 1
 	def run(self):
 		print('Play Button Clicked')
 		#initialize  buffer size
@@ -76,40 +98,18 @@ class Play(QtCore.QThread):
 		# play stream (looping from beginning of file to the end)
 		while data != '':
 		# writing to the stream is what *actually* plays the sound.
-			stream.write(data)
+			decodeddata = numpy.fromstring(data, numpy.int16)
+			newdata = (decodeddata *self.volume).astype(numpy.int16)
+			stream.write(newdata.tostring())
 			data = wave_file.readframes(buffer_size)
 		# cleanup stuff.
 		stream.close()    
 		playback.terminate()
 
-
-# Mix the audio files for play back
-'''
-class PlayAll(QtCore.QThread):
-	def __init__(self, tracks):
-		QtCore.QThread.__init__(self)
-		self.tracks = tracks
-	def run(self):
-
-		infiles = ["Untitled_Track_1", "Untitled_Track_2"]
-		outfile = "Untitled_Track_3"
-
-		data= []
-		for infile in infiles:
-			w = wave.open(infile, 'rb')
-			data.append( [w.getparams(), w.readframes(w.getnframes())] )
-			w.close()
-
-		output = wave.open(outfile, 'wb')
-		output.setparams(data[0][0])
-		output.writeframes(data[0][1])
-		output.writeframes(data[1][1])
-		output.close()
+	def setVolume(self, vol):
+		self.volume = vol
 
 
-		print('PlayAll clicked!')
-		'''
-		
 
 
 
