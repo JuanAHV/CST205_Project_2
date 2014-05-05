@@ -116,11 +116,10 @@ class Main(QtGui.QMainWindow):
         self.playButton.setStyleSheet("background-color: #118811; border-radius:3;color:#ffffff;")
         self.playButton.setText('PLAYING')
         print "play clicked"
-
         self.play.start()
         
-
         for track in self.trackArray:
+                
             if self.trackArray[track].getState() == 'active':
                 
                 print self.trackArray[track].getTrackName() + " is playing"
