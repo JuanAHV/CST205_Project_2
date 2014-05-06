@@ -1,6 +1,5 @@
 from PyQt4 import QtGui, QtCore
-from PySide.QtCore import *
-from PySide.QtGui import *
+from pyo import *
 #import ExtendedQLabel
 import sys, os, shutil
 from Track import *
@@ -76,9 +75,10 @@ class Main(QtGui.QMainWindow):
         # Dialog for creating project at start up
         self.projectPath = self.createProject()
 
+        self.play = Server().boot()
+        
         self.setGeometry(100,100,1000,600)
         self.showMaximized()
-   
 		
     def addTrackWidget(self):
         self.index = self.count
@@ -114,17 +114,26 @@ class Main(QtGui.QMainWindow):
         self.playButton.setText('PLAYING')
         print "play clicked"
         self.playIndex = 0
-        self.playArray = {} 
-
+        self.play.start()
+        
         for track in self.trackArray:
             if self.trackArray[track].getState() == 'active':
                 print self.trackArray[track].getTrackName() + " is playing"
-                self.playArray[self.playIndex] = Play(self.trackArray[track].getTrackName())
+                self.playArray[self.playIndex] = SfPlayer(self.trackArray[track].getTrackName())
+            if self.trackArray[track].chorusState == 'active':
+                self.playArray[self.playIndex] = Chorus(self.playArray[self.playIndex],  depth=1, feedback=0.25, bal=0.5)
+            if self.trackArray[track].reverbState == 'active':
+                self.playArray[self.playIndex] = Freeverb(self.playArray[self.playIndex], [.79,.8], self.trackArray[track].delayDialog.getParam1(), self.trackArray[track].delayDialog.getParam2())
+            if self.trackArray[track].phaserState == 'active':
+                self.playArray[self.playIndex] = Phaser(self.playArray[self.playIndex],  freq=1000, spread=1.1, q=10, feedback=0, num=8)
+            if self.trackArray[track].delayState == 'active':
+                self.playArray[self.playIndex] = Delay(self.playArray[self.playIndex], self.trackArray[track].delayDialog.getParam1(), feedback=0, maxdelay=1)
+            if self.trackArray[track].flangerState == 'active':
+                self.playArray[self.playIndex] = Flanger(self.playArray[self.playIndex], depth=0.75, lfofreq=0.2, feedback=0.25)
                 self.playIndex+=1
 
         for track in self.playArray:
-            self.playArray[track].setVolume(.8)
-            self.playArray[track].start()
+            self.playArray[track].out()
 
     def stopClicked(self):
 
@@ -132,34 +141,35 @@ class Main(QtGui.QMainWindow):
         self.playButton.setText('PLAY')
         self.recordButton.setStyleSheet("background-color: #554444; border-radius:3;color:#ffffff;")
         self.recordButton.setText('RECORD')
-
+        
         print "stop clicked"
-        for track in self.playArray:
-            self.playArray[track].terminate()
+        self.play.stop()
+##        for track in self.playArray:
+##            self.playArray[track].terminate()
         for track in self.recordArray:
             self.recordArray[track].terminate()
 
     def recordClicked(self):
 
+        self.play.start()
+
         if(len(self.trackArray) !=0):
             self.recordButton.setStyleSheet("background-color: #881111; border-radius:3;color:#ffffff;")
             self.recordButton.setText('RECORDING')
-            #print "play clicked"
+            self.playback = {}
             self.playIndex = 0
             self.recordIndex = 0
+            
 
             for track in self.trackArray:
                 if self.trackArray[track].getState() == 'active':
                     print self.trackArray[track].getTrackName() + " is playing"
-                    self.playArray[self.playIndex] = Play(self.trackArray[track].getTrackName())
+                    self.playArray[self.playIndex] = SfPlayer(self.trackArray[track].getTrackName()).out()
                     self.playIndex+=1
-                if self.trackArray[track].getState() == 'record':
+                elif self.trackArray[track].getState() == 'record':
                     print "recording on track "+self.trackArray[track].getTrackName() 
                     self.recordArray[self.recordIndex] = Record(self.trackArray[track].getTrackName())
                     self.recordIndex+=1
-
-            for track in self.playArray:
-                self.playArray[track].start()
 
             for track in self.recordArray:
                 self.recordArray[track].start()

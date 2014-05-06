@@ -5,6 +5,7 @@ import thread
 import subprocess
 import pyaudio
 import wave
+from pyo import *
 from pylab import *
 from PyQt4 import * #QtGui, QtCore
 from Engine import *
@@ -12,7 +13,7 @@ from Engine import *
 class Track(QtGui.QWidget):
 	def __init__( self, name, path, parent=None):
 		super(Track, self).__init__(parent)
-
+                
 		self.state = 'active'
 		self.tempName = "Untitled_Track_"+name
 		self.recordingPath = path+"/audio"
@@ -38,95 +39,109 @@ class Track(QtGui.QWidget):
 		self.editFirstRow = QtGui.QHBoxLayout()
 		self.editSecondRow = QtGui.QHBoxLayout()
 		
-		# Chorus effect buttons
+		# Chorus effect buttons and dialog
 		self.chorusRow = QtGui.QHBoxLayout()
+		self.chorusDialog = startFXSetupGUI(self)
+		self.chorusDialog.setNames("Chorus", "wet", "dry", "balance")
+		self.chorusState = 'inactive'
 
 		self.chorus = QtGui.QPushButton("Chorus")
 		self.chorus.setMaximumSize(80,40)
 
-		self.chorusToggle = QtGui.QPushButton("off")
+		self.chorusToggle = QtGui.QPushButton("OFF")
 		self.chorusToggle.setMaximumSize(40,40)
-
+                self.chorus.setStyleSheet("background-color: grey; border-radius:3;color:#ffffff;")
 		self.chorusRow.addWidget(self.chorus)
 		self.chorusRow.addWidget(self.chorusToggle)
 
 		self.effectsLayout.addLayout(self.chorusRow)
+		self.connect(self.chorus,QtCore.SIGNAL('clicked()'), self.showChorusDialog)
+		self.chorusToggle.setStyleSheet("background-color: #770000; border-radius:3;color:#ffffff;")
+		self.connect(self.chorusToggle, QtCore.SIGNAL('clicked()'), self.chorusOn)
+
+		
 		# *******************************************
 		# Delay effect buttons
 		self.delayRow = QtGui.QHBoxLayout()
+		self.delayDialog = startFXSetupGUI(self)
+		self.delayState = 'inactive'
 
 		self.delay = QtGui.QPushButton("Delay")
 		self.delay.setMaximumSize(80,40)
+		self.delay.setStyleSheet("background-color: grey; border-radius:3;color:#ffffff;")
 
-		self.delayToggle = QtGui.QPushButton("off")
+		self.delayToggle = QtGui.QPushButton("OFF")
 		self.delayToggle.setMaximumSize(40,40)
 
 		self.delayRow.addWidget(self.delay)
 		self.delayRow.addWidget(self.delayToggle)
 
 		self.effectsLayout.addLayout(self.delayRow)
+		self.connect(self.delay,QtCore.SIGNAL('clicked()'), self.showDelayDialog)
+		self.delayToggle.setStyleSheet("background-color: #770000; border-radius:3;color:#ffffff;")
+		self.connect(self.delayToggle, QtCore.SIGNAL('clicked()'), self.delayOn)
 		# *******************************************
 		# Flanger effect buttons
 		self.flangerRow = QtGui.QHBoxLayout()
+		self.flangerDialog = startFXSetupGUI(self)
+		self.flangerState = 'inactive'
+
 
 		self.flanger = QtGui.QPushButton("Flanger")
 		self.flanger.setMaximumSize(80,40)
+		self.flanger.setStyleSheet("background-color: grey; border-radius:3;color:#ffffff;")
 
-		self.flangerToggle = QtGui.QPushButton("off")
+		self.flangerToggle = QtGui.QPushButton("OFF")
 		self.flangerToggle.setMaximumSize(40,40)
 
 		self.flangerRow.addWidget(self.flanger)
 		self.flangerRow.addWidget(self.flangerToggle)
 
 		self.effectsLayout.addLayout(self.flangerRow)
+		self.connect(self.flanger,QtCore.SIGNAL('clicked()'), self.showFlangerDialog)
+		self.flangerToggle.setStyleSheet("background-color: #770000; border-radius:3;color:#ffffff;")
+		self.connect(self.flangerToggle, QtCore.SIGNAL('clicked()'), self.flangerOn)
 		# *******************************************
 		# Phaser effect buttons
 		self.phaserRow = QtGui.QHBoxLayout()
+		self.phaserDialog = startFXSetupGUI(self)
+		self.phaserState = 'inactive'
 
 		self.phaser = QtGui.QPushButton("Phaser")
 		self.phaser.setMaximumSize(80,40)
+		self.phaser.setStyleSheet("background-color: grey; border-radius:3;color:#ffffff;")
 
-		self.phaserToggle = QtGui.QPushButton("off")
+		self.phaserToggle = QtGui.QPushButton("OFF")
 		self.phaserToggle.setMaximumSize(40,40)
 
 		self.phaserRow.addWidget(self.phaser)
 		self.phaserRow.addWidget(self.phaserToggle)
 
 		self.effectsLayout.addLayout(self.phaserRow)
+		self.connect(self.phaser,QtCore.SIGNAL('clicked()'), self.showPhaserDialog)
+		self.phaserToggle.setStyleSheet("background-color: #770000; border-radius:3;color:#ffffff;")
+		self.connect(self.phaserToggle, QtCore.SIGNAL('clicked()'), self.phaserOn)
 		# *******************************************
 		# Reverb effect buttons
 		self.reverbRow = QtGui.QHBoxLayout()
+		self.reverbDialog = startFXSetupGUI(self)
+		self.reverbState = 'inactive'
 
 		self.reverb = QtGui.QPushButton("Reverb")
 		self.reverb.setMaximumSize(80,40)
+		self.reverb.setStyleSheet("background-color: grey; border-radius:3;color:#ffffff;")
 
-		self.reverbToggle = QtGui.QPushButton("off")
+		self.reverbToggle = QtGui.QPushButton("OFF")
 		self.reverbToggle.setMaximumSize(40,40)
 
 		self.reverbRow.addWidget(self.reverb)
 		self.reverbRow.addWidget(self.reverbToggle)
 
 		self.effectsLayout.addLayout(self.reverbRow)
+		self.connect(self.reverb,QtCore.SIGNAL('clicked()'), self.showReverbDialog)
+		self.reverbToggle.setStyleSheet("background-color: #770000; border-radius:3;color:#ffffff;")
+		self.connect(self.reverbToggle, QtCore.SIGNAL('clicked()'), self.reverbOn)
 		# *******************************************
-
-		'''
-		self.b1 = QtGui.QPushButton("<< 5 seconds")
-		self.b1.setMaximumSize(120,40)
-
-		self.editFirstRow.addWidget(self.b1)
-
-		self.b2 = QtGui.QPushButton(">> 5 seconds")
-		self.b2.setMaximumSize(120,40)
-
-		self.editSecondRow.addWidget(self.b2)
-
-		self.editBoxLayout.addLayout(self.editFirstRow)
-		self.editBoxLayout.addLayout(self.editSecondRow)
-
-		#editBoxLayout.addWidget(self.pushButton)
-		self.rightPanel.addLayout(self.editBoxLayout)
-
-		'''
 
 		self.closeButton = QtGui.QPushButton("X")
 		self.closeButton.setMaximumSize(40,120)
@@ -162,15 +177,6 @@ class Track(QtGui.QWidget):
 		self.connect(self.recordButton, QtCore.SIGNAL('clicked()'), self.recordClicked)
 		#self.connect(self.VolumeButton, SIGNAL('clicked()'), self.volumeClicked)
 
-		'''
-		self.leftPanel.addLayout(self.nameLayout)
-		self.leftPanel.addWidget(self.recordButton)
-		self.leftPanel.addWidget(self.muteButton)
-		self.leftPanel.addWidget(self.stopButton)
-		self.leftPanel.addWidget(self.mixButton)
-		self.leftPanel.addLayout(self.effectsLayout)
-		'''
-
 		self.leftControlsPanel.addLayout(self.nameLayout)
 		self.leftControlsPanel.addWidget(self.recordButton)
 		self.leftControlsPanel.addWidget(self.muteButton)
@@ -187,12 +193,6 @@ class Track(QtGui.QWidget):
 	
 
 		self.setLayout(self.layout)
-
-		#create thread for recording
-		self.record = Record(self.tempName)
-
-		#create thread for playback
-		self.play = Play(self.tempName)
 
 		#self.spectrogram = Spectrogram("Untitled_Track_1")
 		#self.spectrogram.start()
@@ -260,36 +260,196 @@ class Track(QtGui.QWidget):
 	def track_name():
 		return str(self.tempName)
 
+	def showChorusDialog(self):
+		self.chorusDialog.show()
 
-class Spectrogram(QtCore.QThread,QtGui.QWidget):
-	def __init__(self, name):
-		QtCore.QThread.__init__(self) 
-		self.name = str(name)
+	def showFlangerDialog(self):
+		self.flangerDialog.show()
 
-	def run(self):
-	#def show_wave_n_spec(self,speech):
-		spf = wave.open(self.name,'r')
-		sound_info = spf.readframes(-1)
-		sound_info = fromstring(sound_info, 'Int16')
+	def showDelayDialog(self):
+		self.delayDialog.show()
 
-		f = spf.getframerate()
-		subplot(211)
-		plot(sound_info)
-		xlim(0, 2000000)        
-		ylim(-40000, 40000)        
-		title('Wave form and spectrogram of test.wav') #%s' % sys.argv[1])
-		subplot(212)
-		spectrogram = specgram(sound_info, Fs = f, scale_by_freq=True,sides='default')
-		#self.addWidget(show())
-		savefig(self.name+".png", bbox_inches='tight')
-		show()
-		spf.close()
+	def showPhaserDialog(self):
+		self.phaserDialog.show()
 
-		self.stuff()
-		self.terminate()
+	def showReverbDialog(self):
+		self.reverbDialog.show()
 
-	def stuff(self):
-		print "function in thread"
+	def chorusOn(self):
+		if(self.chorusState == 'inactive'):
+			self.chorusState = 'active'
+			self.chorusToggle.setText('ON')
+			self.chorusToggle.setStyleSheet("background-color: #00aa00; border-radius:3;color:white;")
+		else:
+			self.chorusState = 'inactive'
+			self.chorusToggle.setText('OFF')
+			self.chorusToggle.setStyleSheet("background-color: #770000; border-radius:3;color:white;")
+
+	def delayOn(self):
+		if(self.delayState == 'inactive'):
+			self.delayState = 'active'
+			self.delayToggle.setText('ON')
+			self.delayToggle.setStyleSheet("background-color: #00aa00; border-radius:3;color:white;")
+		else:
+			self.delayState = 'inactive'
+			self.delayToggle.setText('OFF')
+			self.delayToggle.setStyleSheet("background-color: #770000; border-radius:3;color:white;")                
+
+	def flangerOn(self):
+		if(self.flangerState == 'inactive'):
+			self.flangerState = 'active'
+			self.flangerToggle.setText('ON')
+			self.flangerToggle.setStyleSheet("background-color: #00aa00; border-radius:3;color:white;")
+		else:
+			self.flangerState = 'inactive'
+			self.flangerToggle.setText('OFF')
+			self.flangerToggle.setStyleSheet("background-color: #770000; border-radius:3;color:white;")
+
+	def phaserOn(self):
+		if(self.phaserState == 'inactive'):
+			self.phaserState = 'active'
+			self.phaserToggle.setText('ON')
+			self.phaserToggle.setStyleSheet("background-color: #00aa00; border-radius:3;color:white;")
+		else:
+			self.phaserState = 'inactive'
+			self.phaserToggle.setText('OFF')
+			self.phaserToggle.setStyleSheet("background-color: #770000; border-radius:3;color:white;")
+	def reverbOn(self):
+		if(self.reverbState == 'inactive'):
+			self.reverbState = 'active'
+			self.reverbToggle.setText('ON')
+			self.reverbToggle.setStyleSheet("background-color: #00aa00; border-radius:3;color:white;")
+		else:
+			self.reverbState = 'inactive'
+			self.reverbToggle.setText('OFF')
+			self.reverbToggle.setStyleSheet("background-color: #770000; border-radius:3;color:white;")
+
+class FXSetupGUI(object):
+    def makeUi(self, Dialog):
+        Dialog.setObjectName("Dialog")
+        Dialog.resize(380, 250)
+
+        font = QtGui.QFont()
+        font.setPointSize(12)
+
+        self.name = 'Effect'
+
+        #Effect variables
+        self.param1 = 70
+        self.param2 = 70
+        self.param3 = 70
+
+        self.p1Name = 'p1'
+        self.p2Name = 'p2'
+        self.p3Name = 'p3'
+
+
+        #PARAMETER LABEL 1
+        self.label1 = QtGui.QLabel(Dialog)
+        self.label1.setGeometry(QtCore.QRect(20, 170, 150, 100))
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.label1.setFont(font)
+        self.label1.setObjectName("param1")
+        #PARAMETER LABEL 2
+        self.label2 = QtGui.QLabel(Dialog)
+        self.label2.setGeometry(QtCore.QRect(160, 170, 150, 100))
+        self.label2.setFont(font)
+        self.label2.setObjectName("param2")
+        #PARAMETER LABEL 3
+        self.label3 = QtGui.QLabel(Dialog)
+        self.label3.setGeometry(QtCore.QRect(290, 170, 150, 100))
+        self.label3.setFont(font)
+        self.label3.setObjectName("param3")
+        #slider 1
+        self.slider1 = QtGui.QSlider(Dialog)
+        self.slider1.setRange(0,100)
+        self.slider1.setValue(self.param1)
+        self.slider1.setGeometry(QtCore.QRect(20, 50, 40, 160))
+        self.slider1.setOrientation(QtCore.Qt.Vertical)
+        self.slider1.setObjectName("slider1")
+        
+        #slider 2
+        self.slider2 = QtGui.QSlider(Dialog)
+        self.slider2.setRange(0,100)
+        self.slider2.setValue(self.param2)
+        self.slider2.setGeometry(QtCore.QRect(160, 50, 40, 160))
+        self.slider2.setOrientation(QtCore.Qt.Vertical)
+        self.slider2.setObjectName("slider2")
+        #slider 3
+        self.slider3 = QtGui.QSlider(Dialog)
+        self.slider3.setRange(0,100)
+        self.slider3.setValue(self.param3)
+        self.slider3.setGeometry(QtCore.QRect(290, 50, 40, 160))
+        self.slider3.setOrientation(QtCore.Qt.Vertical)
+        self.slider3.setObjectName("slider3")
+        #valuebox 1
+        self.value1 = QtGui.QLabel(Dialog)
+        self.value1.setGeometry(QtCore.QRect(23, 10, 40, 40))
+        self.value1.setFont(font)
+        self.value1.setText(str(self.param1))
+        self.value1.setObjectName("value1")
+        #valuebox 2
+        self.value2 = QtGui.QLabel(Dialog)
+        self.value2.setGeometry(QtCore.QRect(163, 10, 40, 40))
+        self.value2.setFont(font)
+        self.value2.setText(str(self.param2))
+        self.value2.setObjectName("value2")
+        #valuebox 3
+        self.value3 = QtGui.QLabel(Dialog)
+        self.value3.setGeometry(QtCore.QRect(293, 10, 40, 40))
+        self.value3.setFont(font)
+        self.value3.setText(str(self.param3))
+        self.value3.setObjectName("value3")
+
+        #Strings in box title and other things
+        self.retranslateUi(Dialog)
+
+        #Linking sliders with value boxes
+        self.slider1.valueChanged.connect(self.slider1Changed)
+        self.slider2.valueChanged.connect(self.slider2Changed)
+        self.slider3.valueChanged.connect(self.slider3Changed)
+
+    def getParam1(self):
+    	return float(self.value1.text())/100.0
+
+    def getParam2(self):
+    	return float(self.value2.text())/100.0
+
+    def retranslateUi(self, Dialog):
+        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", self.name , None, QtGui.QApplication.UnicodeUTF8))
+        self.label1.setText(QtGui.QApplication.translate("Dialog", self.p1Name, None, QtGui.QApplication.UnicodeUTF8))
+        self.label2.setText(QtGui.QApplication.translate("Dialog", self.p2Name, None, QtGui.QApplication.UnicodeUTF8))
+        self.label3.setText(QtGui.QApplication.translate("Dialog", self.p3Name, None, QtGui.QApplication.UnicodeUTF8))
+
+    def setDialogName(self, Dialog):
+    	Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", self.name , None, QtGui.QApplication.UnicodeUTF8))
+
+    def getName(self):
+    	return self.name 
+
+    def slider1Changed(self, val):
+        self.value1.setText(str(val))
+
+    def slider2Changed(self, val):
+        self.value2.setText(str(val))
+
+    def slider3Changed(self, val):
+        self.value3.setText(str(val))  
+
+    def setNames(self, name, p1, p2, p3):
+    	#self.name = name
+    	self.label1.setText(QtGui.QApplication.translate("Dialog", p1, None, QtGui.QApplication.UnicodeUTF8))
+        self.label2.setText(QtGui.QApplication.translate("Dialog", p2, None, QtGui.QApplication.UnicodeUTF8))
+        self.label3.setText(QtGui.QApplication.translate("Dialog", p3, None, QtGui.QApplication.UnicodeUTF8))
+
+
+class startFXSetupGUI(QtGui.QDialog, FXSetupGUI):
+    def __init__(self, parent = None):
+        QtGui.QDialog.__init__(self, parent)
+        #self.setDialogName(self.getName())
+        self.makeUi(self)
+
 
 
 
