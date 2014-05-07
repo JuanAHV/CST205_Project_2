@@ -1,6 +1,6 @@
 from PyQt4 import QtGui, QtCore
 from pyo import *
-from customFX import*
+from customFX import *
 #import ExtendedQLabel
 import sys, os, shutil
 from Track import *
@@ -90,12 +90,14 @@ class Main(QtGui.QMainWindow):
 		#self.scrollLayout.addRow(self.track)
 
     def createProject(self):
+
         projectPath, ok = QtGui.QInputDialog.getText(self, 'Create Project', "Project Name: ")
         if ok:
+
             projectPath = str(projectPath)
 
             self.createProjectDirs(projectPath)
-            return projectPath
+            return projectPath+"/audio/"
         else:
             QtGui.QMessageBox.question(self, 'Warning!',"Nothing will be saved unless you create a project.", QtGui.QMessageBox.Ok)
             self.createProjectDirs('temp')
@@ -120,7 +122,8 @@ class Main(QtGui.QMainWindow):
         for track in self.trackArray:
             if self.trackArray[track].getState() == 'active':
                 print self.trackArray[track].getTrackName() + " is playing"
-                self.playArray[self.playIndex] = SfPlayer(self.trackArray[track].getTrackName())
+                trackName = self.projectPath+self.trackArray[track].getTrackName()
+                self.playArray[self.playIndex] = SfPlayer(self.projectPath+ self.trackArray[track].getTrackName())
             if self.trackArray[track].chorusState == 'active':
                 self.playArray[self.playIndex] = Chorus(self.playArray[self.playIndex],  depth= self.trackArray[track].chorusDialog.getParam2() * 5, feedback=self.trackArray[track].chorusDialog.getParam3(), bal=self.trackArray[track].chorusDialog.getParam1())
             if self.trackArray[track].reverbState == 'active':
@@ -133,7 +136,7 @@ class Main(QtGui.QMainWindow):
                 self.playArray[self.playIndex] = Delay(self.playArray[self.playIndex], delay=1+self.trackArray[track].delayDialog.getParam1()*100, feedback=self.trackArray[track].delayDialog.getParam3()*5, maxdelay=1.0+self.trackArray[track].delayDialog.getParam2()*100)
             if self.trackArray[track].flangerState == 'active':
                 self.playArray[self.playIndex] = Flanger(self.playArray[self.playIndex], depth=self.trackArray[track].flangerDialog.getParam1(), lfofreq=self.trackArray[track].flangerDialog.getParam2()*20000, feedback=self.trackArray[track].flangerDialog.getParam3())
-                self.playIndex+=1
+            self.playIndex+=1
 
         for track in self.playArray:
             self.playArray[track].out()
@@ -147,6 +150,8 @@ class Main(QtGui.QMainWindow):
         
         print "stop clicked"
         self.play.stop()
+        if sys.platform == 'linux2':
+            subprocess.call(["killall","arecord"])  
 ##        for track in self.playArray:
 ##            self.playArray[track].terminate()
         for track in self.recordArray:
@@ -167,12 +172,25 @@ class Main(QtGui.QMainWindow):
             for track in self.trackArray:
                 if self.trackArray[track].getState() == 'active':
                     print self.trackArray[track].getTrackName() + " is playing"
-                    self.playArray[self.playIndex] = SfPlayer(self.trackArray[track].getTrackName()).out()
-                    self.playIndex+=1
+                    self.playArray[self.playIndex] = SfPlayer(self.projectPath+self.trackArray[track].getTrackName())
+                if self.trackArray[track].chorusState == 'active':
+                    self.playArray[self.playIndex] = Chorus(self.playArray[self.playIndex],  depth= self.trackArray[track].chorusDialog.getParam2() * 5, feedback=self.trackArray[track].chorusDialog.getParam3(), bal=self.trackArray[track].chorusDialog.getParam1())
+                if self.trackArray[track].reverbState == 'active':
+                    self.playArray[self.playIndex] = Freeverb(self.playArray[self.playIndex], size = self.trackArray[track].reverbDialog.getParam3(), damp = self.trackArray[track].reverbDialog.getParam2(), bal=self.trackArray[track].reverbDialog.getParam1())
+                if self.trackArray[track].phaserState == 'active':
+                    self.lfo1 = Sine(freq=[.1, .15], mul=100, add=240)
+                    self.lfo2 = Sine(freq=[.18, .15], mul=.4, add=1.5)
+                    self.playArray[self.playIndex] = Phaser(self.playArray[self.playIndex],  freq=self.lfo1+int(self.trackArray[track].phaserDialog.getParam1()*100), spread=self.lfo2+self.trackArray[track].phaserDialog.getParam2(), num=int(self.trackArray[track].phaserDialog.getParam3()*100))
+                if self.trackArray[track].delayState == 'active':
+                    self.playArray[self.playIndex] = Delay(self.playArray[self.playIndex], delay=1+self.trackArray[track].delayDialog.getParam1()*100, feedback=self.trackArray[track].delayDialog.getParam3()*5, maxdelay=1.0+self.trackArray[track].delayDialog.getParam2()*100)
+                if self.trackArray[track].flangerState == 'active':
+                    self.playArray[self.playIndex] = Flanger(self.playArray[self.playIndex], depth=self.trackArray[track].flangerDialog.getParam1(), lfofreq=self.trackArray[track].flangerDialog.getParam2()*20000, feedback=self.trackArray[track].flangerDialog.getParam3())
                 elif self.trackArray[track].getState() == 'record':
-                    print "recording on track "+self.trackArray[track].getTrackName() 
-                    self.recordArray[self.recordIndex] = Record(self.trackArray[track].getTrackName())
-                    self.recordIndex+=1
+                    print "recording on track "+self.projectPath+self.trackArray[track].getTrackName() 
+                    self.recordArray[self.recordIndex] = Record(self.projectPath+ self.trackArray[track].getTrackName())
+                self.playIndex+=1
+                print self.playIndex 
+                self.recordIndex+=1
 
             for track in self.recordArray:
                 self.recordArray[track].start()
@@ -194,7 +212,7 @@ myWidget = Main()
 p = myWidget.palette()
 p.setColor(QtGui.QPalette.Background,QtCore.Qt.black)
 myWidget.setPalette(p)
-
+myWidget.setWindowTitle("Python Audio Recording Program")
 myWidget.show()
 app.exec_()
 

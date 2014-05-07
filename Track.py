@@ -16,7 +16,7 @@ class Track(QtGui.QWidget):
                 
 		self.state = 'active'
 		self.tempName = "Untitled_Track_"+name
-		self.recordingPath = path+"/audio"
+		self.recordingPath = path+"/audio/"
 
 		# temporary spectrogram placeholder
 		self.pushButton = QtGui.QPushButton("Spectrogram")
@@ -184,7 +184,10 @@ class Track(QtGui.QWidget):
 		self.leftControlsPanel.addWidget(self.recordButton)
 		self.leftControlsPanel.addWidget(self.muteButton)
 		#self.leftControlsPanel.addWidget(self.stopButton)
-		self.leftControlsPanel.addWidget(self.mixButton)
+		#self.leftControlsPanel.addWidget(self.mixButton)
+		#self.leftControlsPanel.addWidget(self.volSlider)
+		self.mix = MixPopUpWindow(self)
+		self.connect(self.mixButton, QtCore.SIGNAL('clicked()'), self.showMixDialog)
 
 		self.leftPanel.addLayout(self.leftControlsPanel)
 		self.leftPanel.addLayout(self.effectsLayout)
@@ -266,6 +269,9 @@ class Track(QtGui.QWidget):
 	def showChorusDialog(self):
 		self.chorusDialog.show()
 
+	def showMixDialog(self):
+		self.mix.show()
+
 	def showFlangerDialog(self):
 		self.flangerDialog.show()
 
@@ -326,6 +332,38 @@ class Track(QtGui.QWidget):
 			self.reverbState = 'inactive'
 			self.reverbToggle.setText('OFF')
 			self.reverbToggle.setStyleSheet("background-color: #770000; border-radius:3;color:white;")
+
+'''
+class MixDialog(object):
+	def makeUI(self, Dialog):
+		Dialog.setObjectName("Dialog")
+		Dialog.setStyleSheet("background-color: black; border-radius:3;color:white;")
+		Dialog.resize(300,250)
+
+		font = QtGui.QFont()
+		font.setPointSize(12)
+
+		self.name = "Mix"
+
+        self.volSlider = QtGui.QSlider(Dialog)
+        self.volSlider.setRange(0,100)
+        self.volSlider.setValue(75)
+        self.volSlider.setGeometry(QtCore.QRect(20, 50, 40, 160))
+        self.volSlider.setOrientation(QtCore.Qt.Horizontal)
+        self.volSlider.setObjectName("volSlider")
+
+        self.panSlider = QtGui.QSlider(Dialog)
+        self.panSlider.setRange(0,100)
+        self.panSlider.setValue(50)
+        self.panSlider.setGeometry(QtCore.QRect(120, 50, 40, 160))
+        self.panSlider.setOrientation(QtCore.Qt.Horizontal)
+        self.panSlider.setObjectName("panSlider")
+
+class MixPopUpWindow(QtGui.QDialog, MixDialog):
+    def __init__(self, parent = None):
+        QtGui.QDialog.__init__(self, parent)
+        self.makeUi(self)
+'''
 
 class FXSetupGUI(object):
     def makeUi(self, Dialog):
@@ -455,7 +493,6 @@ class FXSetupGUI(object):
 class startFXSetupGUI(QtGui.QDialog, FXSetupGUI):
     def __init__(self, parent = None):
         QtGui.QDialog.__init__(self, parent)
-        #self.setDialogName(self.getName())
         self.makeUi(self)
 
 

@@ -15,44 +15,48 @@ class Record(QtCore.QThread,QtGui.QWidget):
 		self.name = str(name)
 
 	def run(self):
-		CHUNK = 1024
-		FORMAT = pyaudio.paInt16
-		CHANNELS = 2
-		RATE = 44100
-		RECORD_SECONDS = 10
-		WAVE_OUTPUT_FILENAME = self.name
+		if sys.platform == 'linux2':
+			rec = ['arecord','-f','dat','-d','10', self.name]
+			subprocess.Popen(rec , stdout=subprocess.PIPE)
+		else:
+			CHUNK = 1024
+			FORMAT = pyaudio.paInt16
+			CHANNELS = 2
+			RATE = 44100
+			RECORD_SECONDS = 60
+			WAVE_OUTPUT_FILENAME = self.name
 
-		if sys.platform == 'darwin':
-		    CHANNELS = 1
+			if sys.platform == 'darwin':
+			    CHANNELS = 1
 
-		p = pyaudio.PyAudio()
+			p = pyaudio.PyAudio()
 
-		stream = p.open(format=FORMAT,
-		                channels=CHANNELS,
-		                rate=RATE,
-		                input=True,
-		                frames_per_buffer=CHUNK)
+			stream = p.open(format=FORMAT,
+			                channels=CHANNELS,
+			                rate=RATE,
+			                input=True,
+			                frames_per_buffer=CHUNK)
 
-		print("* recording")
+			print("* recording")
 
-		frames = []
+			frames = []
 
-		for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-		    data = stream.read(CHUNK)
-		    frames.append(data)
+			for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+			    data = stream.read(CHUNK)
+			    frames.append(data)
 
-		print("* done recording")
+			print("* done recording")
 
-		stream.stop_stream()
-		stream.close()
-		p.terminate()
+			stream.stop_stream()
+			stream.close()
+			p.terminate()
 
-		wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
-		wf.setnchannels(CHANNELS)
-		wf.setsampwidth(p.get_sample_size(FORMAT))
-		wf.setframerate(RATE)
-		wf.writeframes(b''.join(frames))
-		wf.close()
+			wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+			wf.setnchannels(CHANNELS)
+			wf.setsampwidth(p.get_sample_size(FORMAT))
+			wf.setframerate(RATE)
+			wf.writeframes(b''.join(frames))
+			wf.close()
 
 	def add_silence(self, snd_data, seconds):
 	    "Add silence to the start and end of 'snd_data' of length 'seconds' (float)"
