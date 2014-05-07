@@ -1,5 +1,6 @@
 from PyQt4 import QtGui, QtCore
 from pyo import *
+from customFX import*
 #import ExtendedQLabel
 import sys, os, shutil
 from Track import *
@@ -121,15 +122,17 @@ class Main(QtGui.QMainWindow):
                 print self.trackArray[track].getTrackName() + " is playing"
                 self.playArray[self.playIndex] = SfPlayer(self.trackArray[track].getTrackName())
             if self.trackArray[track].chorusState == 'active':
-                self.playArray[self.playIndex] = Chorus(self.playArray[self.playIndex],  depth=1, feedback=0.25, bal=0.5)
+                self.playArray[self.playIndex] = Chorus(self.playArray[self.playIndex],  depth= self.trackArray[track].chorusDialog.getParam2() * 5, feedback=self.trackArray[track].chorusDialog.getParam3(), bal=self.trackArray[track].chorusDialog.getParam1())
             if self.trackArray[track].reverbState == 'active':
-                self.playArray[self.playIndex] = Freeverb(self.playArray[self.playIndex], [.79,.8], self.trackArray[track].delayDialog.getParam1(), self.trackArray[track].delayDialog.getParam2())
+                self.playArray[self.playIndex] = Freeverb(self.playArray[self.playIndex], size = self.trackArray[track].reverbDialog.getParam3(), damp = self.trackArray[track].reverbDialog.getParam2(), bal=self.trackArray[track].reverbDialog.getParam1())
             if self.trackArray[track].phaserState == 'active':
-                self.playArray[self.playIndex] = Phaser(self.playArray[self.playIndex],  freq=1000, spread=1.1, q=10, feedback=0, num=8)
+                self.lfo1 = Sine(freq=[.1, .15], mul=100, add=240)
+                self.lfo2 = Sine(freq=[.18, .15], mul=.4, add=1.5)
+                self.playArray[self.playIndex] = Phaser(self.playArray[self.playIndex],  freq=self.lfo1+int(self.trackArray[track].phaserDialog.getParam1()*100), spread=self.lfo2+self.trackArray[track].phaserDialog.getParam2(), num=int(self.trackArray[track].phaserDialog.getParam3()*100))
             if self.trackArray[track].delayState == 'active':
-                self.playArray[self.playIndex] = Delay(self.playArray[self.playIndex], self.trackArray[track].delayDialog.getParam1(), feedback=0, maxdelay=1)
+                self.playArray[self.playIndex] = Delay(self.playArray[self.playIndex], delay=1+self.trackArray[track].delayDialog.getParam1()*100, feedback=self.trackArray[track].delayDialog.getParam3()*5, maxdelay=1.0+self.trackArray[track].delayDialog.getParam2()*100)
             if self.trackArray[track].flangerState == 'active':
-                self.playArray[self.playIndex] = Flanger(self.playArray[self.playIndex], depth=0.75, lfofreq=0.2, feedback=0.25)
+                self.playArray[self.playIndex] = Flanger(self.playArray[self.playIndex], depth=self.trackArray[track].flangerDialog.getParam1(), lfofreq=self.trackArray[track].flangerDialog.getParam2()*20000, feedback=self.trackArray[track].flangerDialog.getParam3())
                 self.playIndex+=1
 
         for track in self.playArray:

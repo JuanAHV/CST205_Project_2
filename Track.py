@@ -42,7 +42,7 @@ class Track(QtGui.QWidget):
 		# Chorus effect buttons and dialog
 		self.chorusRow = QtGui.QHBoxLayout()
 		self.chorusDialog = startFXSetupGUI(self)
-		self.chorusDialog.setNames("Chorus", "wet", "dry", "balance")
+		self.chorusDialog.setNames("Chorus", "wet/dry", "depth", "feedback")
 		self.chorusState = 'inactive'
 
 		self.chorus = QtGui.QPushButton("Chorus")
@@ -64,6 +64,7 @@ class Track(QtGui.QWidget):
 		# Delay effect buttons
 		self.delayRow = QtGui.QHBoxLayout()
 		self.delayDialog = startFXSetupGUI(self)
+		self.delayDialog.setNames("Delay", "min(sec)", "max(sec)", "feedback")
 		self.delayState = 'inactive'
 
 		self.delay = QtGui.QPushButton("Delay")
@@ -85,8 +86,8 @@ class Track(QtGui.QWidget):
 		self.flangerRow = QtGui.QHBoxLayout()
 		self.flangerDialog = startFXSetupGUI(self)
 		self.flangerState = 'inactive'
-
-
+                self.flangerDialog.setNames("Flanger", "depth", "LFO freq", "feedback")
+                
 		self.flanger = QtGui.QPushButton("Flanger")
 		self.flanger.setMaximumSize(80,40)
 		self.flanger.setStyleSheet("background-color: grey; border-radius:3;color:#ffffff;")
@@ -105,6 +106,7 @@ class Track(QtGui.QWidget):
 		# Phaser effect buttons
 		self.phaserRow = QtGui.QHBoxLayout()
 		self.phaserDialog = startFXSetupGUI(self)
+		self.phaserDialog.setNames("Phaser", "freq", "spread", "num")
 		self.phaserState = 'inactive'
 
 		self.phaser = QtGui.QPushButton("Phaser")
@@ -125,6 +127,7 @@ class Track(QtGui.QWidget):
 		# Reverb effect buttons
 		self.reverbRow = QtGui.QHBoxLayout()
 		self.reverbDialog = startFXSetupGUI(self)
+		self.reverbDialog.setNames("Reverb", "wet/dry", "dampening", "room size")
 		self.reverbState = 'inactive'
 
 		self.reverb = QtGui.QPushButton("Reverb")
@@ -159,7 +162,7 @@ class Track(QtGui.QWidget):
 		self.nameLayout.addWidget(self.closeButton)
 		self.nameLayout.addWidget(self.trackName)
 
-		self.recordButton = QtGui.QPushButton("Record")
+		self.recordButton = QtGui.QPushButton("Arm")
 		self.recordButton.setMaximumSize(200,100)
 		self.recordButton.setStyleSheet("background-color: #554444; border-radius:3;color:#ffffff;")
 		self.muteButton = QtGui.QPushButton("Mute")
@@ -327,6 +330,7 @@ class Track(QtGui.QWidget):
 class FXSetupGUI(object):
     def makeUi(self, Dialog):
         Dialog.setObjectName("Dialog")
+        Dialog.setStyleSheet("background-color: black; border-radius:3;color:white;")
         Dialog.resize(380, 250)
 
         font = QtGui.QFont()
@@ -335,9 +339,9 @@ class FXSetupGUI(object):
         self.name = 'Effect'
 
         #Effect variables
-        self.param1 = 70
-        self.param2 = 70
-        self.param3 = 70
+        self.param1 = 25
+        self.param2 = 25
+        self.param3 = 25
 
         self.p1Name = 'p1'
         self.p2Name = 'p2'
@@ -416,6 +420,9 @@ class FXSetupGUI(object):
     def getParam2(self):
     	return float(self.value2.text())/100.0
 
+    def getParam3(self):
+    	return float(self.value3.text())/100.0
+
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", self.name , None, QtGui.QApplication.UnicodeUTF8))
         self.label1.setText(QtGui.QApplication.translate("Dialog", self.p1Name, None, QtGui.QApplication.UnicodeUTF8))
@@ -438,7 +445,8 @@ class FXSetupGUI(object):
         self.value3.setText(str(val))  
 
     def setNames(self, name, p1, p2, p3):
-    	#self.name = name
+        self.name = name
+    	self.setWindowTitle(QtGui.QApplication.translate("Dialog",self.name,None,QtGui.QApplication.UnicodeUTF8))
     	self.label1.setText(QtGui.QApplication.translate("Dialog", p1, None, QtGui.QApplication.UnicodeUTF8))
         self.label2.setText(QtGui.QApplication.translate("Dialog", p2, None, QtGui.QApplication.UnicodeUTF8))
         self.label3.setText(QtGui.QApplication.translate("Dialog", p3, None, QtGui.QApplication.UnicodeUTF8))
