@@ -1,14 +1,35 @@
 from PyQt4 import QtGui, QtCore
 from pyo import *
+
 from customFX import *
 #import ExtendedQLabel
-import sys, os, shutil
+import sys, os, shutil, json
+from pprint import pprint
 from Track import *
 from Engine import *
 
 class Main(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(Main, self).__init__(parent)
+
+        menubar = self.menuBar()
+
+        load = QtGui.QAction("Load Project", self)
+        load.setShortcut('Ctrl+L')
+        load.triggered.connect(self.loadProject)
+        save = QtGui.QAction("Save", self)
+        save.setShortcut('Ctrl+S')
+        save.triggered.connect(self.saveProject)
+        exit = QtGui.QAction("Exit", self)
+        exit.setShortcut('Ctrl+Q')
+        exit.triggered.connect(QtGui.qApp.quit)
+        #load.triggered.connect(self.on_triggered)
+        fileMenu = menubar.addMenu('&File')
+        fileMenu.addAction(load)
+        fileMenu.addAction(save)
+        fileMenu.addAction(exit)
+        #fileMenu.addAction('Save')
+        #.triggered.connect(QtGui.qApp.quit)
 
         # main buttons
         self.addButton = QtGui.QPushButton('ADD NEW TRACK')
@@ -89,6 +110,37 @@ class Main(QtGui.QMainWindow):
         self.scrollLayout.addRow(self.trackArray[self.index])
 		#self.scrollLayout.addRow(self.track)
 
+    def saveProject(self):
+        print "project saved"
+
+    def loadProject(self):
+        print "project loaded"
+
+        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file')
+        json_data = open(fname)
+        data = json.load(json_data)
+        pprint(data)
+
+        tracks = len(data["tracks"])
+        print "tracks " + str(tracks)
+
+        count = 0
+        while count < tracks:
+            print data["tracks"][count]["name"]
+
+            self.index = self.count
+            self.count += 1
+            self.trackArray[self.index] = Track(str(self.count),str(self.projectPath))
+            self.trackArray[self.index].setTrackName(data["tracks"][count]["name"])
+
+            self.scrollLayout.addRow(self.trackArray[self.index])
+
+            count+=1
+
+
+
+        #print fname
+
     def createProject(self):
 
         projectPath, ok = QtGui.QInputDialog.getText(self, 'Create Project', "Project Name: ")
@@ -123,7 +175,10 @@ class Main(QtGui.QMainWindow):
             if self.trackArray[track].getState() == 'active':
                 print self.trackArray[track].getTrackName() + " is playing"
                 trackName = self.projectPath+self.trackArray[track].getTrackName()
-                self.playArray[self.playIndex] = SfPlayer(self.projectPath+ self.trackArray[track].getTrackName())
+
+                self.playArray[self.playIndex] = SfPlayer(self.projectPath+ self.trackArray[track].getTrackName(), loop = self.trackArray[track].getLoop())
+                print 'Loop is: ' + str(self.trackArray[track].getLoop())
+
             if self.trackArray[track].chorusState == 'active':
                 self.playArray[self.playIndex] = Chorus(self.playArray[self.playIndex],  depth= self.trackArray[track].chorusDialog.getParam2() * 5, feedback=self.trackArray[track].chorusDialog.getParam3(), bal=self.trackArray[track].chorusDialog.getParam1())
             if self.trackArray[track].reverbState == 'active':
@@ -186,7 +241,7 @@ class Main(QtGui.QMainWindow):
                 if self.trackArray[track].flangerState == 'active':
                     self.playArray[self.playIndex] = Flanger(self.playArray[self.playIndex], depth=self.trackArray[track].flangerDialog.getParam1(), lfofreq=self.trackArray[track].flangerDialog.getParam2()*20000, feedback=self.trackArray[track].flangerDialog.getParam3())
                 elif self.trackArray[track].getState() == 'record':
-                    print "recording on track "+self.projectPath+self.trackArray[track].getTrackName() 
+                    print "recording on track "+self.projectPath+" "+self.trackArray[track].getTrackName()
                     self.recordArray[self.recordIndex] = Record(self.projectPath+ self.trackArray[track].getTrackName())
                 self.playIndex+=1
                 print self.playIndex 
