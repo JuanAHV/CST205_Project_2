@@ -1,6 +1,6 @@
 from PyQt4 import QtGui, QtCore
-from pyo import *
-
+#from pyo import *
+from pyo import effects, filters
 from customFX import *
 #import ExtendedQLabel
 import sys, os, shutil, json
@@ -111,6 +111,9 @@ class Main(QtGui.QMainWindow):
 		#self.scrollLayout.addRow(self.track)
 
     def saveProject(self):
+
+
+
         print "project saved"
 
     def loadProject(self):
@@ -120,6 +123,13 @@ class Main(QtGui.QMainWindow):
         json_data = open(fname)
         data = json.load(json_data)
         pprint(data)
+
+        fname = str(fname)
+
+        base = os.path.basename(fname)
+        path = os.path.splitext(base)[0]
+
+        print "path "+path
 
         tracks = len(data["tracks"])
         print "tracks " + str(tracks)
@@ -139,7 +149,11 @@ class Main(QtGui.QMainWindow):
 
 
 
-        #print fname
+        self.setProjectPath(path)
+
+    def setProjectPath(self,path):
+        self.projectPath = path +"/audio/"
+
 
     def createProject(self):
 
@@ -164,19 +178,20 @@ class Main(QtGui.QMainWindow):
             os.makedirs(dirName+"/audio")
 
     def playClicked(self):
-
         self.playButton.setStyleSheet("background-color: #118811; border-radius:3;color:#ffffff;")
         self.playButton.setText('PLAYING')
         print "play clicked"
+        self.playArray = {}
         self.playIndex = 0
         self.play.start()
         
         for track in self.trackArray:
-            if self.trackArray[track].getState() == 'active':
+            print self.trackArray[track].getState()
+            if self.trackArray[track].getState() == "active":
                 print self.trackArray[track].getTrackName() + " is playing"
                 trackName = self.projectPath+self.trackArray[track].getTrackName()
 
-                self.playArray[self.playIndex] = SfPlayer(self.projectPath+ self.trackArray[track].getTrackName(), loop = self.trackArray[track].getLoop())
+                self.playArray[self.playIndex] = SfPlayer(trackName, loop = self.trackArray[track].getLoop())
                 print 'Loop is: ' + str(self.trackArray[track].getLoop())
 
             if self.trackArray[track].chorusState == 'active':
@@ -219,6 +234,7 @@ class Main(QtGui.QMainWindow):
         if(len(self.trackArray) !=0):
             self.recordButton.setStyleSheet("background-color: #881111; border-radius:3;color:#ffffff;")
             self.recordButton.setText('RECORDING')
+            self.playArray = {}
             self.playback = {}
             self.playIndex = 0
             self.recordIndex = 0

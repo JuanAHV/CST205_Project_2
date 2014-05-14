@@ -6,8 +6,8 @@ import subprocess
 import pyaudio
 import wave
 from pyo import *
-from pylab import *
-from PyQt4 import * #QtGui, QtCore
+#from pylab import *
+from PyQt4 import QtGui, QtCore
 from Engine import *
 
 class Track(QtGui.QWidget):
@@ -150,7 +150,7 @@ class Track(QtGui.QWidget):
 		self.closeButton.setMaximumSize(40,120)
 		self.closeButton.setStyleSheet("background-color: #771111; border-radius:1;color:#ffffff;")
 		self.closeButton.clicked.connect(self.deleteLater)
-		self.closeButton.clicked.connect(self.setState)
+		self.closeButton.clicked.connect(self.setDeleted)
 		self.trackName = QtGui.QPushButton(self.tempName)
 		#self.trackName = QtGui.QLabel(" Untitled Track "+name)
 		self.trackName.setMaximumSize(160,100)
@@ -162,6 +162,9 @@ class Track(QtGui.QWidget):
 		self.nameLayout.addWidget(self.closeButton)
 		self.nameLayout.addWidget(self.trackName)
 
+		#self.mixDialog = MixPopUpWindow(self)
+
+
 		self.recordButton = QtGui.QPushButton("Arm")
 		self.recordButton.setMaximumSize(200,100)
 		self.recordButton.setStyleSheet("background-color: #554444; border-radius:3;color:#ffffff;")
@@ -171,9 +174,18 @@ class Track(QtGui.QWidget):
 		self.stopButton = QtGui.QPushButton("Stop")
 		self.stopButton.setMaximumSize(200,100)
 		self.stopButton.setStyleSheet("background-color: #555544; border-radius:3;color:#ffffff;")
-		self.mixButton = QtGui.QPushButton("Mix")
-		self.mixButton.setMaximumSize(200,100)
-		self.mixButton.setStyleSheet("background-color: #445544; border-radius:3;color:#ffffff;")
+		#self.mixButton = QtGui.QPushButton("Mix")
+		#self.mixButton.setMaximumSize(200,100)
+		#self.mixButton.setStyleSheet("background-color: #445544; border-radius:3;color:#ffffff;")
+		#self.connect(self.mixButton,QtCore.SIGNAL('clicked()'), self.showMixDialog)
+		#LOOP BUTTON *****************************************
+		self.loopButton = QtGui.QPushButton("Loop Off")
+		self.loopButton.setMaximumSize(200,100)
+		self.loopButton.setStyleSheet("background-color: #4d004d; border-radius:3;color:#ffffff;")
+		self.connect(self.loopButton, QtCore.SIGNAL('clicked()'), self.loopClicked)
+		self.loopState = False
+
+		#*****************************************************
 
 		self.connect(self.muteButton, QtCore.SIGNAL('clicked()'), self.muteClicked)
 		#self.connect(self.stopButton, QtCore.SIGNAL('clicked()'), self.stopClicked)
@@ -183,11 +195,19 @@ class Track(QtGui.QWidget):
 		self.leftControlsPanel.addLayout(self.nameLayout)
 		self.leftControlsPanel.addWidget(self.recordButton)
 		self.leftControlsPanel.addWidget(self.muteButton)
+		self.leftControlsPanel.addWidget(self.loopButton)
+		#self.leftControlsPanel.addWidget(self.mixButton)
 		#self.leftControlsPanel.addWidget(self.stopButton)
 		#self.leftControlsPanel.addWidget(self.mixButton)
 		#self.leftControlsPanel.addWidget(self.volSlider)
-		self.mix = MixPopUpWindow(self)
-		self.connect(self.mixButton, QtCore.SIGNAL('clicked()'), self.showMixDialog)
+
+		#self.mix = MixPopUpWindow(self)
+		#Mixer dialog commented out to keep track from running into errors
+		#self.connect(self.mixButton, QtCore.SIGNAL('clicked()'), self.showMixDialog)
+
+		#self.mix = MixPopUpWindow(self)
+		#self.connect(self.mixButton, QtCore.SIGNAL('clicked()'), self.showMixDialog)
+
 
 		self.leftPanel.addLayout(self.leftControlsPanel)
 		self.leftPanel.addLayout(self.effectsLayout)
@@ -203,6 +223,9 @@ class Track(QtGui.QWidget):
 		#self.spectrogram = Spectrogram("Untitled_Track_1")
 		#self.spectrogram.start()
 		#self.spectrogram.stuff()
+
+	def setDeleted(self):
+		self.state = 'deleted'
 
 	def setState(self, state):
 		self.state = state
@@ -238,6 +261,8 @@ class Track(QtGui.QWidget):
 				self.muteButton.setText('Mute')
 				self.muteButton.setStyleSheet("background-color: #555544; border-radius:3;color:#ffffff;")
 
+		print "track state: "+self.getState()
+
 		#start playback thread
 		#self.play.start()
 
@@ -262,6 +287,20 @@ class Track(QtGui.QWidget):
 		# Start recording thread
 		#self.record.start()
 		# Displays a wave form of track recorded
+		
+	def loopClicked(self):
+
+		if(self.loopState == False):
+			self.loopState = True
+			self.loopButton.setText('Loop On')
+			self.loopButton.setStyleSheet("background-color: #800080; border-radius:3;color:#ffffff;")
+		else:
+			self.loopState = False
+			self.loopButton.setText('Loop Off')
+			self.loopButton.setStyleSheet("background-color: #4d004d ; border-radius:3;color:#ffffff;")
+
+	def getLoop(self):
+		return self.loopState
 
 	def track_name():
 		return str(self.tempName)
@@ -270,7 +309,7 @@ class Track(QtGui.QWidget):
 		self.chorusDialog.show()
 
 	def showMixDialog(self):
-		self.mix.show()
+		self.mixDialog.show()
 
 	def showFlangerDialog(self):
 		self.flangerDialog.show()
@@ -335,8 +374,8 @@ class Track(QtGui.QWidget):
 
 '''
 class MixDialog(object):
-	def makeUI(self, Dialog):
-		Dialog.setObjectName("Dialog")
+	def makeUi(self, Dialog):
+		Dialog.setObjectName("MixDialog")
 		Dialog.setStyleSheet("background-color: black; border-radius:3;color:white;")
 		Dialog.resize(300,250)
 

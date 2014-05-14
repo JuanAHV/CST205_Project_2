@@ -6,8 +6,8 @@ import pyaudio
 import wave
 import numpy
 from pyo import *
-from pylab import *
-from PyQt4 import *
+#from pylab import *
+from PyQt4 import QtGui, QtCore
 
 class Record(QtCore.QThread,QtGui.QWidget):
 	def __init__(self, name):
@@ -57,6 +57,7 @@ class Record(QtCore.QThread,QtGui.QWidget):
 			wf.setframerate(RATE)
 			wf.writeframes(b''.join(frames))
 			wf.close()
+			QtGui.QMessageBox.question(self, 'Warning!',"Done recording...", QtGui.QMessageBox.Ok)
 
 	def add_silence(self, snd_data, seconds):
 	    "Add silence to the start and end of 'snd_data' of length 'seconds' (float)"
